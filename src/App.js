@@ -1,4 +1,5 @@
 // import LoginForm from "./Components/Froms/LoginForm/LoginForm";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import WebRoutes from "./Webroutes/WebRoutes";
 // import Navbar from "./Components/Navbar/Navbar";
 // import Sidebar from "./Components/Sidebar/Sidebar";
@@ -8,9 +9,11 @@ import WebRoutes from "./Webroutes/WebRoutes";
 
 function App() {
   return (
-    <div className="App">
-      <WebRoutes />
-    </div>
+    <QueryClientProvider client={new QueryClient()}>
+      <div className="App">
+        <WebRoutes />
+      </div>
+    </QueryClientProvider>
   );
 }
 

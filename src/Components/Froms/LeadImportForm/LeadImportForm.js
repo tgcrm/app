@@ -1,34 +1,34 @@
-import React, { useContext, useEffect, useRef, useState } from "react";
-import { Alert, DatePicker, message } from "antd";
-import { FaEye, FaEyeSlash, FaCut, FaCheck } from "react-icons/fa";
+import React, { useContext, useRef, useState } from "react";
+import { message } from "antd";
+import { FaCheck } from "react-icons/fa";
 import { TGCRMContext } from "../../../Context/Context";
 import moment from "moment";
 import Papa from "papaparse";
 const LeadImportForm = () => {
   const inputRef = useRef(null);
-  const { getLeads, memberData, AuthUser } = useContext(TGCRMContext);
+  const { getLeads, AuthUser } = useContext(TGCRMContext);
 
   const [isReg, setisReg] = useState(false);
   const [showReview, setshowReview] = useState(false);
-  const [Members, setMembers] = useState([]);
+
   // eslint-disable-next-line
-  const [NewFormData, setNewFormData] = useState({
-    full_name: "",
-    first_name: "",
-    last_name: "",
-    gender: "",
-    email: "",
-    phone_no: "",
-    fathers_name: "",
-    dob: "",
-    role: "",
-    branch_position: "",
-    date_created: moment().format("DD-MM-YYYY"),
-    assigned_under: "",
-    assigned_by: `${AuthUser.full_name}`,
-    address: "",
-    password: "",
-  }); // eslint-disable-next-line
+  // const [NewFormData, setNewFormData] = useState({
+  //   full_name: "",
+  //   first_name: "",
+  //   last_name: "",
+  //   gender: "",
+  //   email: "",
+  //   phone_no: "",
+  //   fathers_name: "",
+  //   dob: "",
+  //   role: "",
+  //   branch_position: "",
+  //   date_created: moment().format("DD-MM-YYYY"),
+  //   assigned_under: "",
+  //   assigned_by: `${AuthUser.full_name}`,
+  //   address: "",
+  //   password: "",
+  // }); // eslint-disable-next-line
   const [parsedData, setParsedData] = useState([]);
 
   const [messageApi, contextHolder] = message.useMessage();
@@ -72,14 +72,14 @@ const LeadImportForm = () => {
   const isFormValid = () => {
     return parsedData.length > 2;
   };
-  function convertObjectValuesToLowercase(obj) {
-    const lowercaseObj = Object.entries(obj).reduce((acc, [key, value]) => {
-      acc[key] = typeof value === "string" ? value.toLowerCase() : value;
-      return acc;
-    }, {});
+  // function convertObjectValuesToLowercase(obj) {
+  //   const lowercaseObj = Object.entries(obj).reduce((acc, [key, value]) => {
+  //     acc[key] = typeof value === "string" ? value.toLowerCase() : value;
+  //     return acc;
+  //   }, {});
 
-    return lowercaseObj;
-  }
+  //   return lowercaseObj;
+  // }
   function convertArrayValuesToLowercase(arr) {
     const lowercaseArr = arr.map((obj) => {
       const lowercaseObj = Object.entries(obj).reduce((acc, [key, value]) => {
@@ -94,11 +94,15 @@ const LeadImportForm = () => {
   const handleSubmit = async (e) => {
     const newdata = [...parsedData];
     const lowercaseArr = convertArrayValuesToLowercase(newdata);
+    // console.log(
+    //   "🙏 ~ file: LeadImportForm.js:97 ~ handleSubmit ~ lowercaseArr:",
+    //   lowercaseArr
+    // );
 
     try {
       setisReg(true);
 
-      const response = await fetch("https://tgcrm-root-api.vercel.app/leads", {
+      const response = await fetch("https://tgcrm.vercel.app/leads", {
         method: "POST",
         body: JSON.stringify(lowercaseArr),
         headers: {
@@ -139,8 +143,7 @@ const LeadImportForm = () => {
         `}
         // disabled={!isFormValid()}
         onClick={handleSubmit}
-        disabled={!isFormValid()}
-      >
+        disabled={!isFormValid()}>
         Import Leads<i className="fa-solid fa-house"></i>
       </button>
     );
@@ -153,16 +156,14 @@ const LeadImportForm = () => {
         onClick={() => {
           setisReg(!isReg);
         }}
-        className={`w-60 flex  flex-row justify-center items-center bg-Primary  hover:opacity-80 text-xl  text-white  mr-2 p-2  hover:border-Primary hover:border-opacity-80 rounded-xl opacity-50 cursor-not-allowed`}
-      >
+        className={`w-60 flex  flex-row justify-center items-center bg-Primary  hover:opacity-80 text-xl  text-white  mr-2 p-2  hover:border-Primary hover:border-opacity-80 rounded-xl opacity-50 cursor-not-allowed`}>
         <svg
           aria-hidden="true"
           role="status"
           className="inline w-4 h-4 mr-3 text-white animate-spin"
           viewBox="0 0 100 101"
           fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-        >
+          xmlns="http://www.w3.org/2000/svg">
           <path
             d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z"
             fill="#E5E7EB"
@@ -188,6 +189,7 @@ const LeadImportForm = () => {
           const valuesArray = [];
 
           // Iterating data to get column name and their values
+          // eslint-disable-next-line
           results.data.map((d) => {
             rowsArray.push(Object.keys(d));
             valuesArray.push(Object.values(d));
@@ -196,12 +198,12 @@ const LeadImportForm = () => {
             ...obj,
             assigned_info: [{ to: `${AuthUser.full_name}`, assigned_seq: 1 }],
             status: "Fresh",
-            assigned_to: `${AuthUser.full_name}`,
+            assigned_to: `${AuthUser.full_name.toLowerCase()}`,
             date: moment().format("DD-MM-YYYY"),
-            modified_date: "",
+            modified_date: moment().format("DD-MM-YYYY"),
             action: "No Response",
             day: "",
-            color: "green",
+            color: "red",
             progressPercent: 0,
             tagcolor: "blue",
             comment: "",
@@ -218,9 +220,9 @@ const LeadImportForm = () => {
           setParsedData(filteredData);
           // console.log("Unique Data:", filteredData);
           // Display duplicate data in the console
-          const duplicateData = uniqueMobiles.map((mobile) => {
-            return arr.find((item) => item.mobile === mobile);
-          });
+          // const duplicateData = uniqueMobiles.map((mobile) => {
+          //   return arr.find((item) => item.mobile === mobile);
+          // });
           // console.log("Duplicate Data:", duplicateData);
         },
       });

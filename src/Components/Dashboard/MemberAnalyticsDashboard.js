@@ -1,4 +1,4 @@
-import { Form, Input, InputNumber, Menu, Skeleton, Table, Tag } from "antd";
+import { Form, Input, InputNumber, Menu, Table, Tag } from "antd";
 import dayjs from "dayjs";
 
 import Select from "react-select";
@@ -20,7 +20,7 @@ import {
 import axios from "axios";
 import { TGCRMContext } from "../../Context/Context";
 import styled from "styled-components";
-import "./UserInterface.css";
+
 var isBetween = require("dayjs/plugin/isBetween");
 dayjs.extend(isBetween);
 const { RangePicker } = DatePicker;
@@ -67,14 +67,14 @@ const EditableCell = ({
     </td>
   );
 };
-
-const UserInterface = () => {
+const MemberAnalyticsDashboard = () => {
   const location = useLocation();
   const {
     getMember,
     memberData,
-    getLeadsFromDB,
-    userLeads,
+    getLeads,
+    LeadsData,
+    getStatus,
     StatusData,
     SourcesData,
     CourseData,
@@ -123,10 +123,7 @@ const UserInterface = () => {
     assigned_to: [],
     address: [],
   }); // eslint-disable-next-line
-  const [analyticsDateFilter, setanalyticsDateFilter] = useState([
-    dayjs().format("DD-MM-YYYY"),
-    dayjs().format("DD-MM-YYYY"),
-  ]);
+  const [analyticsDateFilter, setanalyticsDateFilter] = useState([]);
   const [Status_count, setStatus_count] = useState({
     active: 0,
     followUps: 0,
@@ -157,7 +154,6 @@ const UserInterface = () => {
   const [messageApi, contextHolder] = message.useMessage();
   const [isChecked, setIsChecked] = useState(false);
   const navigate = useNavigate();
-  const [showMessage, setShowMessage] = useState(false);
   const handleToggle = () => {
     setIsChecked(!isChecked);
   };
@@ -167,9 +163,6 @@ const UserInterface = () => {
     if (!initialized.current) {
       initialized.current = true;
       callMSg();
-    }
-    if (AuthUser) {
-      getLeadsFromDB(AuthUser.full_name);
     }
   }, []);
   useEffect(() => {
@@ -189,15 +182,13 @@ const UserInterface = () => {
   useEffect(() => {
     if (AuthUser) {
       setPerformancetempData(PerformanceData);
-      const UserPerformance = PerformanceData.filter(
-        (item) =>
-          item.staff_id === AuthUser._id &&
-          dayjs(item.res_date, "DD-MM-YYYY").isBetween(
-            dayjs(analyticsDateFilter[0], "DD-MM-YYYY)"),
-            dayjs(analyticsDateFilter[1], "DD-MM-YYYY)"),
-            "DD-MM-YYYY",
-            "[]"
-          )
+      const UserPerformance = PerformanceData.filter((item) =>
+        dayjs(item.res_date, "DD-MM-YYYY").isBetween(
+          dayjs(analyticsDateFilter[0], "DD-MM-YYYY)"),
+          dayjs(analyticsDateFilter[1], "DD-MM-YYYY)"),
+          "DD-MM-YYYY",
+          "[]"
+        )
       );
 
       setPerformanceTable(UserPerformance);
@@ -218,14 +209,12 @@ const UserInterface = () => {
     console.log("Admins", data);
     setAdminUsers(data);
   }, [getMember]);
-
   useEffect(() => {
     handleAnalyticsFilter();
   }, [PerformancetempData]);
-  //////Fetch leads///
 
   useEffect(() => {
-    const newArray = userLeads.map((obj, index) => {
+    const newArray = LeadsData.map((obj, index) => {
       return { ...obj, ["key"]: index };
     });
     const tempCourse = [{ name: "none" }, ...CourseData];
@@ -233,25 +222,28 @@ const UserInterface = () => {
     setNewSourceData(SourcesData);
     setNewStatus(StatusData);
     if (AuthUser) {
-      const tempLead = newArray.filter((item) => {
-        return item.assigned_to === AuthUser.full_name;
+      setLeads(LeadsData);
+      const newLeads = LeadsData.filter((item) => {
+        return dayjs(item.modified_date, "DD-MM-YYYY").isBetween(
+          dayjs(FormData.date[0], "DD-MM-YYYY"),
+          dayjs(FormData.date[1], "DD-MM-YYYY"),
+          "DD-MM-YYYY",
+          "[]"
+        );
       });
-      setLeads(tempLead);
-      handleFilter(tempLead);
-      // const lowercaseArray = convertArrayValuesToLowercase(filterLeads());
-      // setTableData(lowercaseArray);
+      setTableData(newLeads);
     }
-  }, [getLeadsFromDB]);
+  }, [getLeads]);
 
   const StyledRangePickerContainer = styled.div`
     .ant-picker-panel {
       &:last-child {
         width: 0;
-        .ant-picker- {
+        .ant-picker-header {
           position: absolute;
           right: 0;
-          .ant-picker--prev-btn,
-          .ant-picker--view {
+          .ant-picker-header-prev-btn,
+          .ant-picker-header-view {
             visibility: hidden;
           }
         }
@@ -262,10 +254,10 @@ const UserInterface = () => {
 
         @media (min-width: 768px) {
           width: 280px !important;
-          .ant-picker- {
+          .ant-picker-header {
             position: relative;
-            .ant-picker--prev-btn,
-            .ant-picker--view {
+            .ant-picker-header-prev-btn,
+            .ant-picker-header-view {
               visibility: initial;
             }
           }
@@ -329,7 +321,6 @@ const UserInterface = () => {
       icon: null,
     });
   };
-
   //////handle Lead Response Data////
   const handleResponseSubmit = async (lead_id, lead_preStatus) => {
     const newdata = { ...ResponseData };
@@ -358,19 +349,10 @@ const UserInterface = () => {
               }
             );
             if (leadRes) {
-              let newdata = { ...ResponseData };
-              newdata.lead_comment = "-";
-              newdata.lead_status = "";
-              newdata.lead_course = "";
-              newdata.lead_id = "";
-              newdata.previous_status = "";
-              newdata.lead_color = "";
-              setResponseData(newdata);
-              getLeadsFromDB(AuthUser.full_name);
+              getLeads();
               getPerformance();
               setIsSubmit("");
             }
-
             console.log(await leadRes.json());
           } catch (error) {
             console.log(error);
@@ -381,17 +363,6 @@ const UserInterface = () => {
       } catch (error) {
         console.log(error);
         setIsSubmit("");
-        setResponseData({
-          staff_id: AuthUser._id,
-          staff_name: AuthUser.full_name,
-          lead_id: "",
-          lead_status: "",
-          lead_course: "",
-          lead_comment: "",
-          res_date: dayjs().format("DD-MM-YYYY"),
-          previous_status: "",
-          lead_color: "",
-        });
       }
     } else {
       alert(
@@ -399,19 +370,9 @@ const UserInterface = () => {
       );
     }
   };
-  const handleResponseComment = (comment, id) => {
-    console.log(
-      "🙏 ~ file: UserInterface.js:393 ~ handleResponseComment ~ name:",
-      id
-    );
-    console.log(
-      "🙏 ~ file: UserInterface.js:393 ~ handleResponseComment ~ comment",
-      comment,
-      id
-    );
+  const handleResponseComment = (e) => {
     const newData = { ...ResponseData };
-    newData.lead_id = id;
-    newData.lead_comment = comment;
+    newData.lead_comment = e.target.value;
     setResponseData(newData);
   };
   const handleResponseCourse = (e) => {
@@ -479,17 +440,18 @@ const UserInterface = () => {
   };
 
   const handleDateCreated = (date, dateString) => {
+    console.log("date Created", dateString);
     const newData = { ...FormData };
-    newData.date = !date
-      ? [dayjs().format("DD-MM-YYYY"), dayjs().format("DD-MM-YYYY")]
-      : dateString;
+    newData.date = dateString;
     setFormData(newData);
     setcreate_date_object(date);
+    console.log("date Created", dateString);
   };
 
   const handleAnalyticsDateCreated = (date, dateString) => {
     setanalyticsDateFilter(dateString);
     setAnalyticsdate_object(date);
+    console.log("date analytics", dateString);
   };
 
   const handleAssignedUnder = (e) => {
@@ -736,7 +698,7 @@ const UserInterface = () => {
     value: item.full_name,
     label: item.full_name,
   }));
-  const name_options = Leads.map((item) => ({
+  const name_options = Users.map((item) => ({
     value: item.name,
     label: item.name,
   }));
@@ -805,8 +767,9 @@ const UserInterface = () => {
     return lowercaseArr;
   }
 
-  const handleFilter = (leads) => {
-    const lowercaseArray = convertArrayValuesToLowercase(filterLeads(leads));
+  const handleFilter = () => {
+    const lowercaseArray = convertArrayValuesToLowercase(filterLeads());
+
     setTableData(lowercaseArray);
   };
   const handleReset = () => {
@@ -912,7 +875,7 @@ const UserInterface = () => {
   const filterAnanlytics = () => {
     return PerformancetempData.filter(
       (item) =>
-        item.staff_id === AuthUser._id &&
+        item.staff_id === filtername &&
         (!Analyticsdate_object ||
           dayjs(item.res_date, "DD-MM-YYYY").isBetween(
             dayjs(analyticsDateFilter[0], "DD-MM-YYYY"),
@@ -934,28 +897,21 @@ const UserInterface = () => {
         )
     );
   };
-
-  const filterLeads = (leads) => {
-    return leads.filter(
+  const filterLeads = () => {
+    return Leads.filter(
       (item) =>
-        item.assigned_to === AuthUser.full_name &&
         (!filtername.length > 0 || filtername.includes(item.name)) &&
         (!filtersource.length > 0 || filtersource.includes(item.source)) &&
         (!filterPhone.length > 0 || filterPhone.includes(item.mobile)) &&
-        // (!filterassigned_to.length > 0 ||
-        //   filterassigned_to.includes(item.assigned_to)) &&
+        (!filterstatus.length > 0 || filterstatus.includes(item.status)) &&
+        (!filterassigned_to.length > 0 ||
+          filterassigned_to.includes(item.assigned_to)) &&
         (!filterstatus.length > 0 || filterstatus.includes(item.status)) &&
         (!filtercourse.length > 0 || filtercourse.includes(item.course)) &&
         (!filteraddress.length > 0 || filteraddress.includes(item.address)) &&
         (!filtergender.length > 0 || filtergender.includes(item.gender)) &&
         (!FormData.dob > 0 || FormData.dob === item.dob) &&
-        ((!create_date_object &&
-          dayjs(item.modified_date, "DD-MM-YYYY").isBetween(
-            dayjs(dayjs().format("DD-MM-YYYY"), "DD-MM-YYYY"),
-            dayjs(dayjs().format("DD-MM-YYYY"), "DD-MM-YYYY"),
-            "DD-MM-YYYY",
-            "[]"
-          )) ||
+        (!create_date_object ||
           dayjs(item.modified_date, "DD-MM-YYYY").isBetween(
             dayjs(FormData.date[0], "DD-MM-YYYY"),
             dayjs(FormData.date[1], "DD-MM-YYYY"),
@@ -964,7 +920,6 @@ const UserInterface = () => {
           ))
     );
   };
-
   const rangePresets = [
     {
       label: "This Week",
@@ -981,14 +936,6 @@ const UserInterface = () => {
     {
       label: "Last Month",
       value: [dayjs().date(1).add(-1, "M"), dayjs().date(0)],
-    },
-    {
-      label: "Life Time",
-      value: [dayjs().date(1).month(6), dayjs()],
-    },
-    {
-      label: "Today",
-      value: [dayjs(), dayjs()],
     },
   ];
   // leadFiltertab/////
@@ -1128,27 +1075,6 @@ const UserInterface = () => {
                     classNamePrefix="select"
                   />
                 </div>
-                {/* Course */}
-                <div className="flex flex-row justify-between m-2 bg-slate-600 rounded-md">
-                  <label className="text-white font-bold p-1">Address:</label>
-                  <Select
-                    onChange={handleAddress}
-                    value={FormData.address}
-                    styles={{
-                      control: (baseStyles, state) => ({
-                        ...baseStyles,
-                        border: state.isFocused ? "none" : "none",
-                        backgroundColor: "transparent",
-                        height: "100%",
-                      }),
-                    }}
-                    className="rounded-r-md bg-slate-200 p1 w-7/12 font-bold pl-1 focus:outline-none "
-                    isMulti
-                    name="colors"
-                    options={address_options}
-                    classNamePrefix="select"
-                  />
-                </div>
               </div>
               <div className="  flex flex-col justify-start flex-grow">
                 {/* Date Created/// */}
@@ -1156,7 +1082,7 @@ const UserInterface = () => {
                   <label
                     htmlFor="date"
                     className="text-white font-bold p-1 w-9/12">
-                    Date :
+                    Date Created:
                   </label>
 
                   <RangePicker
@@ -1178,9 +1104,8 @@ const UserInterface = () => {
             <div className="flex justify-end items-center">
               <div>
                 <button
-                  disabled={showMessage === true}
-                  onClick={() => handleFilter(Leads)}
-                  className={` flex  flex-row justify-center bg-Primary w-24   hover:bg-green-800 text-xl  text-white  mr-2 p-2  hover:border-Primary hover:border-opacity-80 rounded`}>
+                  onClick={handleFilter}
+                  className=" flex  flex-row justify-center bg-Primary w-24  hover:opacity-80 text-xl  text-white  mr-2 p-2  hover:border-Primary hover:border-opacity-80 rounded">
                   <span>
                     <FaCheck />
                   </span>
@@ -1328,7 +1253,7 @@ const UserInterface = () => {
             }
             // Handle the leadResponse
             console.log(leadResponse.data);
-            getLeadsFromDB(AuthUser.full_name);
+            getLeads();
           } catch (error) {
             // Handle the error
             setassign_to([]);
@@ -1516,18 +1441,14 @@ const UserInterface = () => {
   );
   const logout = () => {
     window.localStorage.removeItem("token_id");
-    window.location.href = "./";
+    navigate("/");
   };
   const SideMenu = () => {
     return (
       <div
         className="z-50 absolute mx-2  text-base list-none bg-white divide-y divide-gray-100 rounded-lg shadow dark:bg-gray-700 dark:divide-gray-600"
         id="user-dropdown">
-        <div
-          className="px-4 py-3"
-          onClick={() => {
-            window.location.href = "./";
-          }}>
+        <div className="px-4 py-3">
           <span className="block text-sm text-gray-900 dark:text-white">
             {AuthUser.full_name}
           </span>
@@ -1536,15 +1457,6 @@ const UserInterface = () => {
           </span>
         </div>
         <ul className="py-2" aria-labelledby="user-menu-button">
-          {/* <li>
-            <button
-              onClick={() => {
-               
-              }}
-              className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-200 dark:hover:text-white">
-              Reload
-            </button>
-          </li> */}
           {selectedView === "call" ? (
             <li>
               <button
@@ -1585,175 +1497,33 @@ const UserInterface = () => {
       {/* {topMenu} */}
       {/* ////filtertab//// */}
 
-      {/* //////////////// */}
-      {selectedView === "call" ? (
-        <>
-          <FilterTab />
-          {isChecked && <SideMenu />}
-          <div className="font-bold text-xl m-2 text-white ">
-            <span> Total Leads : {TableData.length}</span>
-          </div>
-          <div
-            id="layout"
-            className=" h-12/12 overflow-auto mb-2 pb-4 "
-            style={{ overflow: "scroll", height: "85vh" }}>
-            {TableData.map((lead, index) => (
-              <div
-                key={index}
-                className={`flex rounded-sm w-12/12 shadow-lg mt-4 mb-4  mx-2 
-                   bg-white  border-l-8`}
-                style={{ borderColor: `${lead.tagcolor}` }}>
-                {/* Info column*/}
-                <div className="flex flex-col rounded-md justify-start items-center  text-sm font-sans  p-1   border-white  w-6/12 ">
-                  <div className="flex justify-start  items-center gap-1 py-1 w-full pl-2 text-black">
-                    <FaUser size={9} /> {toCamelCase(lead.name)}
-                  </div>
-                  <div className="flex justify-start items-center gap-1 py-1 w-full  pl-2  mb-1 text-black">
-                    <div className="flex items-center">
-                      <FaPhoneAlt size={9} />
-                    </div>
-                    <div>{lead.mobile}</div>
-                  </div>
-                  <div className="w-full flex flex-col justify-between flex-wrap items-start">
-                    {
-                      <Tag
-                        className="flex flex-wrap justify-start flex-row whitespace-pre-wrap break-words truncate max-w-full"
-                        color={`${lead.tagcolor}`}>
-                        {lead.status}
-                      </Tag>
-                    }
+      <FilterTab />
 
-                    <div className="flex flex-row justify-between items-center w-full ">
-                      {
-                        <Tag
-                          className="flex flex-wrap justify-start flex-row whitespace-pre-wrap break-words truncate max-w-[7.5rem]"
-                          color={`blue`}>
-                          {lead.course}
-                        </Tag>
-                      }
-                      <button
-                        onClick={() =>
-                          handleResponseSubmit(lead._id, lead.status)
-                        }
-                        disabled={IsSubmit === lead._id}
-                        name=""
-                        id=""
-                        className={` flex justify-center  bg-green-600 backdrop-blur-lg items-center py-1 w-[3.5rem]  rounded-md my-1  text-white ${
-                          IsSubmit === lead._id ? "opacity-25" : ""
-                        }`}>
-                        Submit
-                      </button>
-                    </div>
-                  </div>
-                  <div className="w-full flex flex-col justify-between flex-wrap items-start">
-                    <Tag className="flex flex-wrap justify-start flex-row whitespace-pre-wrap break-words truncate max-w-full">
-                      {lead.comment}
-                    </Tag>
-                  </div>
-                </div>
-
-                {/* Response column*/}
-                <div className="flex flex-col justify-evenly items-center gap-2 text-xs font-sans  p-1   w-4/12">
-                  <select
-                    name=""
-                    id=""
-                    className="flex justify-center items-center p-1 w-full rounded-md  bg-slate-300"
-                    onChange={handleResponseStatus}>
-                    <option disabled selected value={""}>
-                      {/* {lead.status != "fresh" ? lead.status : "Select status"}
-                       */}
-                      Select Status
-                    </option>
-                    {StatusData.map((item) => (
-                      <option value={`${item.name}|${item.color_code}`}>
-                        {toCamelCase(item.name)}
-                      </option>
-                    ))}
-                  </select>
-
-                  <select
-                    name=""
-                    id=""
-                    className="flex justify-center items-center p-1 w-full rounded-md  bg-slate-300"
-                    onChange={handleResponseCourse}>
-                    (
-                    <option disabled selected value={""}>
-                      {/* {lead.course ? lead.course : "Select course"} */}
-                      Select Course
-                    </option>
-                    )
-                    {NewCourse.map((item) => (
-                      <option value={item.name}>
-                        {toCamelCase(item.name)}
-                      </option>
-                    ))}
-                  </select>
-                  <input
-                    value={
-                      lead.name === ResponseData.lead_id
-                        ? ResponseData.lead_comment
-                        : ""
-                    }
-                    placeholder={lead.comment ? lead.comment : "comment"}
-                    type="text"
-                    name=""
-                    id=""
-                    className="flex justify-center items-center h-7 pl-2  text-xs w-full rounded-md  bg-slate-300"
-                    onChange={(e) =>
-                      handleResponseComment(e.target.value, lead.name)
-                    }
-                  />
-                </div>
-
-                {/* Call Buttons column*/}
-
-                <div className="flex flex-col justify-between items-center gap-2 text-xs font-sans font-bold p-1   w-2/12">
-                  <a
-                    href={`tel:${lead.mobile}`}
-                    className="flex justify-center items-center text-lg text-white   h-full w-full rounded-md  bg-blue-500">
-                    <FaPhone />
-                  </a>
-                  <a
-                    href={`https://api.whatsapp.com/send?phone=${lead.mobile}`}
-                    className="flex justify-center items-center text-lg text-white   h-full w-full rounded-md  bg-green-500">
-                    <FaWhatsapp color="" />
-                  </a>
-                </div>
-              </div>
-            ))}
-          </div>
-        </>
-      ) : (
-        <>
-          <AnalyticsFilterTab />
-          {isChecked && <SideMenu />}
-          {/* <button onClick={countFunction}>click</button> */}
-          <div
-            id="layout"
-            className="h-12/12 overflow-auto "
-            style={{
-              overflow: "scroll",
-              height: "100vh",
-              Scrollbar: "none",
-              scrollbarWidth: "none",
-            }}>
-            <div
-              className="flex w-12/12 rounded-md  bg-white/30 backdrop-blur-sm   shadow-lg mt-1 mb-4 mx-2
+      {/* <button onClick={countFunction}>click</button> */}
+      <div
+        id="layout"
+        className="h-12/12 overflow-auto "
+        style={{
+          overflow: "scroll",
+          height: "100vh",
+          Scrollbar: "none",
+          scrollbarWidth: "none",
+        }}>
+        <div
+          className="flex w-12/12 rounded-md  bg-white/30 backdrop-blur-sm   shadow-lg mt-1 mb-4 mx-2
      ">
-              {/* Info column*/}
-              <div className="flex flex-col justify-center items-center text-lg font-sans font-bold p-1  w-full ">
-                <div className="flex justify-center items-center py-1 w-full rounded-md my-1  text-white">
-                  Total leads Assigned : {TotalAssign}
-                </div>
-              </div>
-              {/* Active */}
+          {/* Info column*/}
+          <div className="flex flex-col justify-center items-center text-lg font-sans font-bold p-1  w-full ">
+            <div className="flex justify-center items-center py-1 w-full rounded-md my-1  text-white">
+              Total leads Assigned : {TotalAssign}
             </div>
-            {Object.entries(Status_count).map(([key, value]) => (
-              <AnalyticsComp name={key} value={value} />
-            ))}
           </div>
-        </>
-      )}
+          {/* Active */}
+        </div>
+        {Object.entries(Status_count).map(([key, value]) => (
+          <AnalyticsComp name={key} value={value} />
+        ))}
+      </div>
 
       {/* Action Comp */}
       <div className="fixed w-full h-10 bottom-0 flex justify-center items-center text-sm text-white bg-white/30 backdrop-blur-sm rounded  shadow-lg ">
@@ -1786,4 +1556,4 @@ const UserInterface = () => {
     </div>
   );
 };
-export default UserInterface;
+export default MemberAnalyticsDashboard;

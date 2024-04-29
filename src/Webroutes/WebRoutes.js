@@ -17,9 +17,13 @@ import StatusList from "../Components/Tables/Status/StatusList/StatusList";
 import StatusRegForm from "../Components/Froms/StatusRegForm/StatusRegForm";
 import CourseRegForm from "../Components/Froms/CourseRegForm/CourseRegForm";
 import SourceRegForm from "../Components/Froms/SourceRegForm/SourceRegForm";
-import Test from "../Test/Test";
+import Test from "../Test/Lead";
 import LeadImportForm from "../Components/Froms/LeadImportForm/LeadImportForm";
 import UserInterface from "../Components/UserInterface/UserInterface";
+import SourceAnalytics from "../Components/Tables/Source/SourceAnalytics/SourceAnalytics";
+import Charts from "../Test/charts";
+import SA from "../Test/SA";
+import DashboardContent from "../Components/Dashboard/DashboardContent";
 
 export default function WebRoutes() {
   return (
@@ -34,14 +38,13 @@ export default function WebRoutes() {
               <AdminRoute path="/admin">
                 <AdminLayout />
               </AdminRoute>
-            }
-          >
+            }>
             <Route
               exact
               path="/admin"
               element={
                 <AdminRoute path="admin-dashboard">
-                  <LoginForm />
+                  <MemberAnalytics />
                 </AdminRoute>
               }
             />
@@ -50,7 +53,7 @@ export default function WebRoutes() {
               path="dashboard"
               element={
                 <AdminRoute path="dashboard">
-                  <UserInterface />
+                  <DashboardContent />
                 </AdminRoute>
               }
             />
@@ -68,7 +71,7 @@ export default function WebRoutes() {
               path="member-performance"
               element={
                 <AdminRoute path="member-performance">
-                  <Test />
+                  <MemberAnalytics />
                 </AdminRoute>
               }
             />
@@ -81,6 +84,15 @@ export default function WebRoutes() {
                 </AdminRoute>
               }
             />
+            {/* <Route
+              exact
+              path="lead-analytics"
+              element={
+                <AdminRoute path="member">
+                  <Charts />
+                </AdminRoute>
+              }
+            /> */}
             <Route
               exact
               path="reg-leads"
@@ -92,10 +104,19 @@ export default function WebRoutes() {
             />
             <Route
               exact
-              path="test"
+              path="source-analytics"
               element={
                 <AdminRoute path="member">
-                  <Test />
+                  <SourceAnalytics />
+                </AdminRoute>
+              }
+            />
+            <Route
+              exact
+              path="lead-analytics"
+              element={
+                <AdminRoute path="member">
+                  <SA />
                 </AdminRoute>
               }
             />
@@ -155,6 +176,16 @@ export default function WebRoutes() {
             />
             <Route
               exact
+              path="lead-analytics"
+              element={
+                <AdminRoute path="lead-analytics">
+                  <Test />
+                </AdminRoute>
+              }
+            />
+
+            <Route
+              exact
               path="source"
               element={
                 <AdminRoute path="member">
@@ -162,18 +193,26 @@ export default function WebRoutes() {
                 </AdminRoute>
               }
             />
-
+            <Route
+              exact
+              path="calling"
+              element={
+                <AdminRoute path="member">
+                  <UserInterface />
+                </AdminRoute>
+              }
+            />
             <Route path="*" element={<ErrorPage />} />
           </Route>
+
           <Route
             exact
             path="/user"
             element={
               <UserRoute>
-                <UserInputLayout />
+                <UserInterface />
               </UserRoute>
-            }
-          >
+            }>
             <Route
               exact
               path="/user"
@@ -186,7 +225,7 @@ export default function WebRoutes() {
             <Route path="*" element={<ErrorPage />} />
           </Route>
           <Route path="*" Component={<ErrorPage />} />
-        </Routes>{" "}
+        </Routes>
         {/* <div>
           <Link className="ml-2 bg-black text-white" to={"/admin"}>
             <button>admin</button>
@@ -198,7 +237,7 @@ export default function WebRoutes() {
             <button>member</button>
           </Link>
         </div> */}
-      </BrowserRouter>{" "}
+      </BrowserRouter>
     </>
   );
 }

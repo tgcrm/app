@@ -3,7 +3,7 @@ import Logo from "../../Assets/Images/Logo.png";
 import { TGCRMContext } from "../../Context/Context";
 import { Link, useNavigate } from "react-router-dom";
 function Navbar() {
-  const navigation = useNavigate();
+  const navigate = useNavigate();
   const { getLeads, memberData, AuthUser } = useContext(TGCRMContext);
   const [profile_DD, setprofile_DD] = useState(false);
   return (
@@ -64,7 +64,7 @@ function Navbar() {
               <Link
                 onClick={() => {
                   window.localStorage.removeItem("token_id");
-                  navigation("/");
+                  window.location.href = "./";
                 }}
                 className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-200 dark:hover:text-white"
               >

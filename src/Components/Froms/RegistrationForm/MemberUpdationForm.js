@@ -3,7 +3,8 @@ import { Alert, DatePicker, message } from "antd";
 import { FaEye, FaEyeSlash, FaCut, FaCheck } from "react-icons/fa";
 import { TGCRMContext } from "../../../Context/Context";
 import moment from "moment";
-const RegistrationForm = () => {
+import dayjs from "dayjs";
+const MemberUpdationForm = (props) => {
   const { getMember, memberData, AuthUser } = useContext(TGCRMContext);
   const [emailError, setEmailError] = useState("");
   const [passwordError, setPasswordError] = useState("");
@@ -13,9 +14,8 @@ const RegistrationForm = () => {
   const [Members, setMembers] = useState([]);
   // eslint-disable-next-line
   const [NewFormData, setNewFormData] = useState({
+    _id: "",
     full_name: "",
-    first_name: "",
-    last_name: "",
     gender: "",
     email: "",
     phone_no: "",
@@ -31,6 +31,22 @@ const RegistrationForm = () => {
     assigned_info: [],
   }); // eslint-disable-next-line
   const [messageApi, contextHolder] = message.useMessage();
+  useEffect(() => {
+    const tempdata = { ...NewFormData };
+    tempdata._id = props._id;
+    tempdata.gender = props.gender;
+    tempdata.full_name = props.full_name;
+    tempdata.dob = dayjs(props.dob, "DD-MM-YYYY");
+    tempdata.role = props.role;
+    tempdata.address = props.address;
+    tempdata.password = props.password;
+    tempdata.email = props.email;
+    tempdata.phone_no = props.phone_no;
+    tempdata.branch_position = props.branch_position;
+    tempdata.fathers_name = props.fathers_name;
+    tempdata.assigned_under = props.assigned_under;
+    setNewFormData(tempdata);
+  }, [props]);
   const success = () => {
     messageApi.open({
       content: (
@@ -39,7 +55,7 @@ const RegistrationForm = () => {
             <div className=" w-6 h-6 text-white flex text-base items-center justify-center rounded-full bg-green-600 mr-2">
               <FaCheck />
             </div>
-            <div className=" text-green-600"> Member Added Successfully</div>
+            <div className=" text-green-600"> Member Updated Successfully</div>
           </div>
         </div>
       ),
@@ -55,15 +71,17 @@ const RegistrationForm = () => {
             <div className=" w-6 h-6 text-white flex text-base items-center justify-center rounded-full bg-red-600 mr-2">
               X
             </div>
-            <div className="font-bold text-red-600"> Member Adding Failed </div>
+            <div className="font-bold text-red-600">
+              {" "}
+              Member Updation Failed
+            </div>
           </div>
           <div className="text-md font-bold">
-            {" "}
-            Member with Email
+            Email
             <span className="text-red-700 mr-1 ml-1 font-bold">
               {NewFormData.email}
             </span>
-            already exist{" "}
+            already exist
           </div>
         </div>
       ),
@@ -179,10 +197,13 @@ const RegistrationForm = () => {
       NewFormData.password &&
       !emailError &&
       !passwordError &&
-      NewFormData.first_name &&
-      NewFormData.last_name &&
+      NewFormData.assigned_under &&
+      NewFormData.dob &&
       NewFormData.phone_no &&
-      NewFormData.role
+      NewFormData.branch_position &&
+      NewFormData.role &&
+      NewFormData.fathers_name &&
+      NewFormData.gender
     );
   };
   function convertObjectValuesToLowercase(obj) {
@@ -212,7 +233,6 @@ const RegistrationForm = () => {
   }
   const handleSubmit = async (e) => {
     const newData = { ...NewFormData };
-    newData.full_name = `${newData.first_name} ${newData.last_name}`;
 
     newData.dob = JSON.stringify(newData.dob)
       .slice(1, 11)
@@ -223,7 +243,8 @@ const RegistrationForm = () => {
     lowercaseObject.password = toCamelCase(lowercaseObject.password);
     try {
       setisReg(true);
-      const response = await fetch("https://tgcrm.vercel.app/member", {
+
+      const response = await fetch("https://tgcrm.vercel.app/update-member", {
         method: "POST",
         body: JSON.stringify(lowercaseObject),
         headers: {
@@ -325,20 +346,21 @@ const RegistrationForm = () => {
       <div className="flex flex-row justify-between mb-2 w-full flex-wrap">
         <div className="  flex flex-col justify-between flex-grow">
           <div className="flex flex-row justify-between m-2 bg-slate-600 rounded-md">
-            <label className="text-white font-bold p-1">First Name:</label>
+            <label className="text-white font-bold p-1">Name:</label>
             <span
               className={` flex items-center w-7/12 bg-slate-200 p1 border-r-8  border-green-500 font-bold pl-1 focus:outline-none`}>
-              {NewFormData.first_name}
+              {NewFormData.full_name}
             </span>
           </div>
 
-          <div className=" flex flex-row justify-between m-2 bg-slate-600 rounded-md">
+          {/* <div className=" flex flex-row justify-between m-2 bg-slate-600 rounded-md">
             <label className="text-white font-bold p-1">Last Name:</label>
             <span
-              className={` flex items-center w-7/12 bg-slate-200 p1 border-r-8  border-green-500 font-bold pl-1 focus:outline-none`}>
+              className={` flex items-center w-7/12 bg-slate-200 p1 border-r-8  border-green-500 font-bold pl-1 focus:outline-none`}
+            >
               {NewFormData.last_name}
             </span>
-          </div>
+          </div> */}
 
           <div className="flex flex-row justify-between m-2 bg-slate-600 rounded-md">
             <label className="text-white font-bold p-1">Gender:</label>
@@ -462,23 +484,17 @@ const RegistrationForm = () => {
       <div className="flex flex-row justify-between mb-2 w-full flex-wrap">
         <div className="  flex flex-col justify-between flex-grow">
           <div className="flex flex-row justify-between m-2 bg-slate-600 rounded-md">
-            <label className="text-white font-bold p-1">First Name:</label>
+            <label className="text-white font-bold p-1">Name:</label>
             <input
-              className={
-                NewFormData.first_name.length === 0
-                  ? ` bg-slate-200 p1 border-r-8  border-yellow-500  w-7/12 font-bold pl-1 focus:outline-none`
-                  : NewFormData.first_name.length < 2
-                  ? `  bg-slate-200 box-border border-r-8 border-red-600 p1 w-7/12  font-bold pl-1 focus:outline-none`
-                  : `  bg-slate-200  box-border  border-r-8 border-green-600 p1 w-7/12  font-bold pl-1 focus:outline-none`
-              }
-              onChange={handleFirstName}
-              value={NewFormData.first_name}
+              disabled
+              className={`  bg-slate-200  box-border  border-r-8 border-green-600 p1 w-7/12  font-bold pl-1 focus:outline-none placeholder:text-black`}
+              placeholder={props.full_name}
               name="first_name"
               type="text"
             />
           </div>
 
-          <div className="flex flex-row justify-between m-2 bg-slate-600 rounded-md">
+          {/* <div className="flex flex-row justify-between m-2 bg-slate-600 rounded-md">
             <label className="text-white font-bold p-1">Last Name:</label>
             <input
               className={
@@ -493,7 +509,7 @@ const RegistrationForm = () => {
               name="last_name"
               type="text"
             />
-          </div>
+          </div> */}
 
           <div className="flex flex-row justify-between m-2 bg-slate-600 rounded-md">
             <label className="text-white font-bold p-1">Gender:</label>
@@ -510,8 +526,8 @@ const RegistrationForm = () => {
                   id="Male"
                   type="radio"
                   name="gender"
-                  value="Male"
-                  checked={NewFormData.gender === "Male"}
+                  value="male"
+                  checked={NewFormData.gender === "male"}
                   onChange={handleGender}
                 />
                 <span className="ml-2 font-bold">Male</span>
@@ -546,6 +562,7 @@ const RegistrationForm = () => {
             </label>
 
             <DatePicker
+              placeholder={NewFormData.dob}
               format={"DD-MM-YYYY"}
               value={NewFormData.dob}
               onChange={handleDOB}
@@ -677,7 +694,7 @@ const RegistrationForm = () => {
               onChange={handleAssignedUnder}
               value={NewFormData.assigned_under}
               name="assigned_under">
-              <option value="">Select Head</option>
+              <option value="">{NewFormData.assigned_under}</option>
               {Members.map(
                 (item) =>
                   (item.role === "admin" || item.role === "manager") && (
@@ -730,7 +747,7 @@ const RegistrationForm = () => {
               setshowReview(!showReview);
             }}
             disabled={!isFormValid()}>
-            Add Member<i className="fa-solid fa-house"></i>
+            Update Member<i className="fa-solid fa-house"></i>
           </button>
         </div>
       </div>
@@ -742,4 +759,4 @@ const RegistrationForm = () => {
   }));
   return <>{showReview ? confirmReg : RegForm}</>;
 };
-export default RegistrationForm;
+export default MemberUpdationForm;

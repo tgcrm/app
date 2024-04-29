@@ -16,7 +16,9 @@ export const Context = ({ children }) => {
   const [StatusData, setStatusData] = useState([]);
   const [SourcesData, setSourcesData] = useState([]);
   const [LeadsData, setLeadsData] = useState([]);
+  const [userLeads, setuserLeads] = useState([]);
   const [PerformanceData, setPerformanceData] = useState([]);
+  let GLOBAL_API_URI = "https://tgcrm.vercel.app/";
   useEffect(() => {
     getMember();
     getCourse();
@@ -28,20 +30,16 @@ export const Context = ({ children }) => {
   //////Fetch Member///
   const getMember = async () => {
     try {
-      const response = await axios.get(
-        "https://tgcrm-root-api.vercel.app/member"
-      );
-      console.log("Members from Context", response.data);
+      const response = await axios.get("https://tgcrm.vercel.app/member");
+
       setMemberData(response.data);
-    } catch (error) {
-      console.error("Error:", error);
-    }
+    } catch (error) {}
   };
   ///////////////Login///////////////
   const login = async ({ email, password }) => {
     try {
       setislogin(true);
-      const response = await fetch("https://tgcrm-root-api.vercel.app/login", {
+      const response = await fetch("https://tgcrm.vercel.app/login", {
         method: "POST",
         body: JSON.stringify({ email, password }),
         headers: {
@@ -49,14 +47,9 @@ export const Context = ({ children }) => {
         },
       });
       const { token, memberData } = await response.json();
-      console.log(
-        "Token From Context",
-        token,
-        "member Data from Context",
-        memberData
-      );
+
       // const data = await response.json();
-      console.log("data", token);
+
       if (!token) {
         setuserToken(null);
         setislogin(false);
@@ -85,10 +78,8 @@ export const Context = ({ children }) => {
   //////Fetch Member///
   const getCourse = async () => {
     try {
-      const response = await axios.get(
-        "https://tgcrm-root-api.vercel.app/course"
-      );
-      console.log("Courses from Context", response.data);
+      const response = await axios.get("https://tgcrm.vercel.app/course");
+
       setCourseData(response.data);
     } catch (error) {
       console.error("Error:", error);
@@ -97,10 +88,8 @@ export const Context = ({ children }) => {
   //////Fetch Status///
   const getStatus = async () => {
     try {
-      const response = await axios.get(
-        "https://tgcrm-root-api.vercel.app/status"
-      );
-      console.log("statuss from Context", response.data);
+      const response = await axios.get("https://tgcrm.vercel.app/status");
+
       setStatusData(response.data);
     } catch (error) {
       console.error("Error:", error);
@@ -110,10 +99,8 @@ export const Context = ({ children }) => {
   //////Fetch Source///
   const getSource = async () => {
     try {
-      const response = await axios.get(
-        "https://tgcrm-root-api.vercel.app/source"
-      );
-      console.log("statuss from Context", response.data);
+      const response = await axios.get("https://tgcrm.vercel.app/source");
+
       setSourcesData(response.data);
     } catch (error) {
       console.error("Error:", error);
@@ -123,23 +110,38 @@ export const Context = ({ children }) => {
   //////Fetch Source///
   const getLeads = async () => {
     try {
-      const response = await axios.get(
-        "https://tgcrm-root-api.vercel.app/leads"
+      const response = await axios.get("https://tgcrm.vercel.app/leads");
+      console.log(
+        "🙏 ~ file: Context.js:125 ~ getLeads ~ response:",
+        response.data
       );
-      console.log("Leads from Context", response.data);
+
       setLeadsData(response.data);
     } catch (error) {
       console.error("Error:", error);
     }
   };
-
+  const getLeadsFromDB = async (name) => {
+    try {
+      const newdata = { assigned_to: name };
+      const response = await axios.post(
+        "https://tgcrm.vercel.app/filter-leads",
+        newdata
+      );
+      setuserLeads(response.data);
+      console.log(
+        "🙏 ~ file: Context.js:139 ~ getLeadsFromDB ~ leads",
+        response.data
+      );
+    } catch (error) {
+      console.error("Error:", error);
+    }
+  };
   //////Fetch Status///
   const getPerformance = async () => {
     try {
-      const response = await axios.get(
-        "https://tgcrm-root-api.vercel.app/performance"
-      );
-      console.log("statuss from Context", response.data);
+      const response = await axios.get("https://tgcrm.vercel.app/performance");
+
       setPerformanceData(response.data);
     } catch (error) {
       console.error("Error:", error);
@@ -169,8 +171,10 @@ export const Context = ({ children }) => {
         LeadsData,
         getPerformance,
         PerformanceData,
-      }}
-    >
+        GLOBAL_API_URI,
+        getLeadsFromDB,
+        userLeads,
+      }}>
       {children}
     </TGCRMContext.Provider>
   );

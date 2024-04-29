@@ -118,7 +118,7 @@ const StatusRegForm = () => {
     try {
       setisReg(true);
 
-      const response = await fetch("https://tgcrm-root-api.vercel.app/status", {
+      const response = await fetch("https://tgcrm.vercel.app/status", {
         method: "POST",
         body: JSON.stringify(lowercaseObject),
         headers: {
@@ -163,8 +163,7 @@ const StatusRegForm = () => {
         `}
         // disabled={!isFormValid()}
         onClick={handleSubmit}
-        disabled={!isFormValid()}
-      >
+        disabled={!isFormValid()}>
         Add Status<i className="fa-solid fa-house"></i>
       </button>
     );
@@ -177,16 +176,14 @@ const StatusRegForm = () => {
         onClick={() => {
           setisReg(!isReg);
         }}
-        className={`w-60 flex  flex-row justify-center items-center bg-Primary  hover:opacity-80 text-xl  text-white  mr-2 p-2  hover:border-Primary hover:border-opacity-80 rounded-xl opacity-50 cursor-not-allowed`}
-      >
+        className={`w-60 flex  flex-row justify-center items-center bg-Primary  hover:opacity-80 text-xl  text-white  mr-2 p-2  hover:border-Primary hover:border-opacity-80 rounded-xl opacity-50 cursor-not-allowed`}>
         <svg
           aria-hidden="true"
           role="status"
           className="inline w-4 h-4 mr-3 text-white animate-spin"
           viewBox="0 0 100 101"
           fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-        >
+          xmlns="http://www.w3.org/2000/svg">
           <path
             d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z"
             fill="#E5E7EB"
@@ -243,9 +240,8 @@ const StatusRegForm = () => {
                 }
                 onChange={handlefollowup_count}
                 value={FormData.followup_count}
-                name="role"
-              >
-                <option value="">Count For Admin</option>
+                name="role">
+                <option value="">Count For FollowUp</option>
                 <option value="yes">Yes</option>
                 <option value="no">No</option>
 
@@ -257,8 +253,7 @@ const StatusRegForm = () => {
             <div className="flex  flex-row justify-between m-2 bg-slate-600 rounded-md">
               <label
                 // style={{ background: `${FormData.color_code}` }}
-                className="text-white pl-2 font-bold p-1"
-              >
+                className="text-white pl-2 font-bold p-1">
                 Status Color:
               </label>
               <div
@@ -268,8 +263,7 @@ const StatusRegForm = () => {
                     : FormData.color_code.length < 2
                     ? "flex bg-slate-200 p1 border-r-8 h-full border-red-500  w-7/12 font-bold pl-1 decoration-none focus:outline-none"
                     : "flex bg-slate-200 p1 border-r-8 h-full border-green-500  w-7/12 font-bold pl-1 decoration-none focus:outline-none"
-                }
-              >
+                }>
                 <input
                   type="color"
                   className=" bg-slate-200 p1  h-full  w-10/12 font-bold pl-1 decoration-none focus:outline-none"
@@ -277,8 +271,7 @@ const StatusRegForm = () => {
                 />
                 <span
                   style={{ background: `${FormData.color_code}` }}
-                  className="flex border-2 text-white  items-center justify-center w-32"
-                >
+                  className="flex border-2 text-white  items-center justify-center w-32">
                   {FormData.color_code}
                 </span>
               </div>
@@ -300,9 +293,8 @@ const StatusRegForm = () => {
                 }
                 onChange={handleadmin_count}
                 value={FormData.admin_count}
-                name="role"
-              >
-                <option value="">Count For Admin</option>
+                name="role">
+                <option value="">Count For Active</option>
                 <option value="yes">Yes</option>
                 <option value="no">No</option>
 

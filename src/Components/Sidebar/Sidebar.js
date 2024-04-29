@@ -14,7 +14,7 @@ import { RiArrowDropDownLine } from "react-icons/ri";
 import { Link, useNavigate } from "react-router-dom";
 import {} from "react-icons/md";
 
-import { FaChalkboardTeacher, FaChild, FaStar } from "react-icons/fa";
+import { FaChalkboardTeacher, FaChild, FaLeaf, FaStar } from "react-icons/fa";
 // import Link from "react-dom";
 
 const Sidebar = () => {
@@ -35,26 +35,26 @@ const Sidebar = () => {
           link: "member-performance",
           icon: FaChalkboardTeacher,
         },
-        {
-          name: "Lead Analytics",
-          link: "lead-analytics",
-          icon: MdLeaderboard,
-        },
+        // {
+        //   name: "Lead Analytics",
+        //   link: "lead-analytics",
+        //   icon: MdLeaderboard,
+        // },
         {
           name: "Source Analytics ",
           link: "source-analytics",
           icon: MdSource,
         },
-        {
-          name: "Course Analytics",
-          link: "course-analytics",
-          icon: MdOutlineLibraryBooks,
-        },
-        {
-          name: "Status Analytics",
-          link: "status-analytics",
-          icon: FaStar,
-        },
+        // {
+        //   name: "Course Analytics",
+        //   link: "course-analytics",
+        //   icon: MdOutlineLibraryBooks,
+        // },
+        // {
+        //   name: "Status Analytics",
+        //   link: "status-analytics",
+        //   icon: FaStar,
+        // },
       ],
     },
     {
@@ -143,13 +143,23 @@ const Sidebar = () => {
         },
       ],
     },
+    {
+      name: "Calling",
+      link: "calling",
+      icon: MdDashboard,
+    },
   ];
   const [menuOpen, setmenuOpen] = useState(true);
   const [SubmenuOpen, setSubmenuOpen] = useState("");
-
+  const [isOpened, setisOpened] = useState(false);
   const handleMenu = (menu, link) => {
     if (menu?.submenus) {
-      setSubmenuOpen(menu.name);
+      if (isOpened && SubmenuOpen === menu.name) {
+        setisOpened(false);
+      } else {
+        setisOpened(true);
+        setSubmenuOpen(menu.name);
+      }
     } else {
       //   alert(JSON.stringify(menu));
       Navigate(link);
@@ -173,7 +183,7 @@ const Sidebar = () => {
             }}
           />
         </div>
-        <div className="mt-4 flex flex-col gap-4 relative">
+        <div className="mt-4 flex flex-col gap-2 relative">
           {menus?.map((menu, i) => (
             <>
               <button
@@ -183,7 +193,7 @@ const Sidebar = () => {
                 key={i}
                 className={` ${
                   menu?.margin && "mt-5"
-                } bg-gray-700 group flex items-center text-sm  gap-3.5 font-medium p-2 hover:bg-Primary rounded-md`}
+                } bg-gray-700 group flex items-center text-sm  gap-3.5 font-medium p-2 hover:bg-Primary border-l-2 rounded-r`}
               >
                 <div>{React.createElement(menu?.icon, { size: "20" })}</div>
                 <h2
@@ -194,7 +204,7 @@ const Sidebar = () => {
                     !menuOpen && "opacity-0 translate-x-28 overflow-hidden"
                   }`}
                 >
-                  {menu?.name}{" "}
+                  {menu?.name}
                   {menu?.submenus && SubmenuOpen === menu.name ? (
                     <RiArrowDropDownLine />
                   ) : (
@@ -209,15 +219,22 @@ const Sidebar = () => {
                   {menu?.name}
                 </h2>
               </button>
-              <div className="bg-slate-600 mt-0 rounded-md">
+              <div
+                className={`bg-slate-600 ml-4  border-l-2 ${
+                  SubmenuOpen === menu.name && isOpened
+                    ? "border-white "
+                    : "border-none"
+                } box-border `}
+              >
                 {menu?.submenus &&
                   SubmenuOpen &&
+                  isOpened &&
                   menu?.submenus.map((item, index) => (
                     <Link
                       to={item?.link}
                       key={index}
                       className={`${
-                        menu.name === SubmenuOpen ? "" : "hidden"
+                        menu.name === SubmenuOpen ? "" : "hidden "
                       } w-full group flex items-center text-sm  gap-3.5 font-medium p-2 hover:bg-Primary rounded-md`}
                     >
                       <div>

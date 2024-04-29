@@ -48,7 +48,7 @@ const LoginForm = () => {
       console.log("login");
     } else {
       if (AuthUser.role === "admin") {
-        navigate("/admin");
+        navigate("/admin/dashboard");
       } else {
         navigate("/user");
       }

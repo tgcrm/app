@@ -1,14 +1,24 @@
-import { Form, Input, InputNumber, Popconfirm, Table, Typography } from "antd";
+import {
+  Button,
+  Form,
+  Input,
+  InputNumber,
+  Popconfirm,
+  Table,
+  Tag,
+  Typography,
+} from "antd";
 import { useContext, useEffect, useState } from "react";
 import { DatePicker } from "antd";
 import Select from "react-select";
 // import RegistrationForm from "../../../Froms/RegistrationForm/RegistrationForm";
 import { useLocation } from "react-router-dom";
 import RegistrationForm from "../../../Froms/RegistrationForm/RegistrationForm";
-import { FaCheck } from "react-icons/fa";
+import { FaCheck, FaInfo, FaTrash } from "react-icons/fa";
 import CourseRegForm from "../../../Froms/CourseRegForm/CourseRegForm";
 import { TGCRMContext } from "../../../../Context/Context";
 import dayjs from "dayjs";
+import axios from "axios";
 const { RangePicker } = DatePicker;
 const originData = [];
 for (let i = 0; i < 100; i++) {
@@ -43,8 +53,7 @@ const EditableCell = ({
               required: true,
               message: `Please Input ${title}!`,
             },
-          ]}
-        >
+          ]}>
           {inputNode}
         </Form.Item>
       ) : (
@@ -74,8 +83,16 @@ const CourseList = () => {
 
     course_fee: [],
   }); // eslint-disable-next-line
-  const { getMember, memberData, CourseData, getCourse } =
+  const { getMember, memberData, CourseData, getCourse, GLOBAL_API_URI } =
     useContext(TGCRMContext);
+  const [editingCell, seteditingCell] = useState("");
+  const [StatusUpddateData, setStatusUpddateData] = useState({
+    name: "",
+
+    course_code: "",
+    course_fee: "",
+  }); // eslint-disable-next-line
+
   const [create_date_object, setcreate_date_object] = useState([]);
   const [TableData, setTableData] = useState([]);
   const [Course, setCourse] = useState([]);
@@ -118,11 +135,6 @@ const CourseList = () => {
     setFormData(newData);
   };
 
-  const handlecourse_fee = (value) => {
-    const newData = { ...FormData };
-    newData.course_fee = value;
-    setFormData(newData);
-  };
   const handleDateCreated = (date, dateString) => {
     console.log("date Created", dateString);
     const newData = { ...FormData };
@@ -138,102 +150,210 @@ const CourseList = () => {
   };
 
   const isEditing = (record) => record.key === editingKey;
-  const edit = (record) => {
-    form.setFieldsValue({
-      name: "",
-      age: "",
-      address: "",
-      ...record,
-    });
-    setEditingKey(record.key);
+
+  const handleUpdatedname = (value) => {
+    const newData = { ...StatusUpddateData };
+    newData.name = value.target.value;
+    setStatusUpddateData(newData);
   };
-  const cancel = () => {
-    setEditingKey("");
+  const handleUpdatedcode = (value) => {
+    const newData = { ...StatusUpddateData };
+    newData.course_code = value.target.value;
+    setStatusUpddateData(newData);
   };
-  const save = async (key) => {
-    try {
-      const row = await form.validateFields();
-      const newData = [...data];
-      const index = newData.findIndex((item) => key === item.key);
-      if (index > -1) {
-        const item = newData[index];
-        newData.splice(index, 1, {
-          ...item,
-          ...row,
-        });
-        setData(newData);
-        setEditingKey("");
-      } else {
-        newData.push(row);
-        setData(newData);
-        setEditingKey("");
-      }
-    } catch (errInfo) {
-      console.log("Validate Failed:", errInfo);
-    }
+  const handleUpdatedFee = (value) => {
+    const newData = { ...StatusUpddateData };
+    newData.course_fee = value.target.value;
+    setStatusUpddateData(newData);
   };
+
   const columns = [
     {
-      title: "name",
-      dataIndex: "name",
-      width: "25%",
-      editable: true,
-    },
-    {
-      title: "Code",
-      dataIndex: "course_code",
+      title: <div className="flex justify-center font-bold">Course Name</div>,
       width: "15%",
       editable: true,
+      render: (_, record) => {
+        return record._id === editingCell ? (
+          <Input
+            value={StatusUpddateData.name}
+            onChange={handleUpdatedname}
+            className="text-black placeholder:text-black backdrop-blur-sm"
+            type="text"
+            // placeholder={record.name}
+          />
+        ) : (
+          <div className="flex justify-start">
+            <span color={record.course_code}>{record.name}</span>
+          </div>
+        );
+      },
     },
     {
-      title: "Fee",
-      dataIndex: "course_fee",
+      title: <div className="flex justify-center font-bold">Course Code</div>,
       width: "15%",
       editable: true,
+      render: (_, record) => {
+        return record._id === editingCell ? (
+          <Input
+            value={StatusUpddateData.course_code}
+            onChange={handleUpdatedcode}
+            className="text-black placeholder:text-black backdrop-blur-sm"
+            type="text"
+            // placeholder={record.name}
+          />
+        ) : (
+          <div className="flex justify-start">
+            <span color={record.course_code}>{record.course_code}</span>
+          </div>
+        );
+      },
     },
     {
-      title: "Created By",
+      title: <div className="flex justify-center font-bold">Course Fees</div>,
+      width: "15%",
+      editable: true,
+      render: (_, record) => {
+        return record._id === editingCell ? (
+          <Input
+            value={StatusUpddateData.course_fee}
+            onChange={handleUpdatedFee}
+            className="text-black placeholder:text-black backdrop-blur-sm"
+            type="text"
+            // placeholder={record.name}
+          />
+        ) : (
+          <div className="flex justify-start">
+            <span color={record.course_code}>{record.course_fee}</span>
+          </div>
+        );
+      },
+    },
+    {
+      title: <div className="flex  font-bold">Created By</div>,
       dataIndex: "created_by",
-      width: "20%",
+      widthL: "10%",
       editable: true,
     },
     {
-      title: "Created Date",
+      title: <div className="flex  font-bold">Created Date</div>,
       dataIndex: "date_created",
-      width: "15%",
+
       editable: true,
     },
     {
-      title: "operation",
-      dataIndex: "operation",
+      title: <div className="flex justify-center font-bold">Action</div>,
+      dataIndex: "action",
       width: "15%",
       render: (_, record) => {
-        const editable = isEditing(record);
-        return editable ? (
-          <span>
-            <Typography.Link
-              onClick={() => save(record.key)}
-              style={{
-                marginRight: 8,
-              }}
-            >
+        return editingCell === record._id ? (
+          <div className="flex justify-center">
+            <Tag
+              color="orange"
+              className=" items-center hover:cursor-pointer"
+              onClick={() => UpdateStatus(record._id)}>
               Save
-            </Typography.Link>
-            <Popconfirm title="Sure to cancel?" onConfirm={cancel}>
-              <a href="/#">Cancel</a>
-            </Popconfirm>
-          </span>
+            </Tag>{" "}
+            <Tag
+              className=" hover:cursor-pointer"
+              onClick={() => {
+                seteditingCell("");
+              }}>
+              Cancel
+            </Tag>{" "}
+          </div>
         ) : (
-          <Typography.Link
-            disabled={editingKey !== ""}
-            onClick={() => edit(record)}
-          >
-            Edit
-          </Typography.Link>
+          <div className="flex justify-center">
+            <Tag
+              className="font-bold hover:cursor-pointer"
+              color="blue"
+              onClick={() => getEditingCell(record)}>
+              Edit
+            </Tag>{" "}
+            <Popconfirm
+              onConfirm={() => {
+                handleDelete(record._id);
+              }}
+              title="Delete the task"
+              description="Are you sure to delete this task?"
+              icon={<FaInfo color="red" />}
+              okButtonProps={<Button type="primary" />}>
+              <Tag className=" hover:cursor-pointer" color="red">
+                Delete
+              </Tag>
+            </Popconfirm>
+          </div>
         );
       },
     },
   ];
+  let getEditingCell = (record) => {
+    let newdata = { ...StatusUpddateData };
+    newdata.name = record.name;
+    newdata.course_code = record.course_code;
+    newdata.course_fee = record.course_fee;
+
+    setStatusUpddateData(newdata);
+    seteditingCell(record._id);
+  };
+  function convertObjectValuesToLowercase(obj) {
+    const lowercaseObj = Object.entries(obj).reduce((acc, [key, value]) => {
+      acc[key] = typeof value === "string" ? value.toLowerCase() : value;
+      return acc;
+    }, {});
+
+    return lowercaseObj;
+  }
+
+  let UpdateStatus = async (recordId) => {
+    let data = { ...StatusUpddateData };
+    const recordData = {
+      _id: recordId,
+      name: data.name,
+      course_code: data.course_code,
+      course_fee: data.course_fee,
+      followup_count: data.followup_count,
+    };
+    let lowercaseRecord = convertObjectValuesToLowercase(recordData);
+    if (recordData.name) {
+      try {
+        const statusUpdateResponse = await axios.post(
+          `${GLOBAL_API_URI}update-course`,
+          lowercaseRecord
+        );
+        if (statusUpdateResponse) {
+          getCourse();
+          seteditingCell("");
+          alert("Course Updated");
+        }
+      } catch (error) {}
+    } else {
+      alert("Course Cannot be Empty");
+    }
+    console.log(recordId);
+  };
+  const handleDelete = async (Data_Key) => {
+    try {
+      const deleteStatus = {
+        documentId: Data_Key,
+      };
+      const response = await fetch(`https://tgcrm.vercel.app/delete-course`, {
+        method: "POST",
+        body: JSON.stringify(deleteStatus),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      alert("Status deleted");
+      getCourse();
+    } catch (error) {
+      console.log(error);
+    }
+    const deleteStatus = {
+      documentId: Data_Key,
+    };
+
+    getCourse();
+  };
   const mergedColumns = columns.map((col) => {
     if (!col.editable) {
       return col;
@@ -254,15 +374,7 @@ const CourseList = () => {
     setOpenRegForm(false);
     setOpenFilter(!OpenFilter);
   };
-  ///////////////handle Registration Toggle /////////////
-  const handleRegToggle = () => {
-    setOpenRegForm(!OpenRegForm);
-    setOpenFilter(false);
-  };
-  /////////////////////Member Registration Form////////////////////////////////
-  const RegForm = () => {
-    return <CourseRegForm />;
-  };
+
   const rangePresets = [
     {
       label: "This Week",
@@ -345,15 +457,13 @@ const CourseList = () => {
           <div>
             <button
               onClick={handlefilterToggle}
-              className="bg-Primary w-20 hover:opacity-50 text-sm  text-white font-bold  mr-2 py-2 px-4 border-b-4 border-yellow-800 hover:border-Primary hover:border-opacity-25 rounded"
-            >
+              className="bg-Primary w-20 hover:opacity-50 text-sm  text-white font-bold  mr-2 py-2 px-4 border-b-4 border-yellow-800 hover:border-Primary hover:border-opacity-25 rounded">
               {OpenFilter ? <span>X</span> : <span>Filter</span>}
             </button>
 
             <button
               onClick={handleReset}
-              className="bg-Primary hover:opacity-50 text-sm  text-white font-bold  py-2 px-4 border-b-4 border-yellow-800 hover:border-Primary hover:border-opacity-25 rounded"
-            >
+              className="bg-Primary hover:opacity-50 text-sm  text-white font-bold  py-2 px-4 border-b-4 border-yellow-800 hover:border-Primary hover:border-opacity-25 rounded">
               Reset
             </button>
           </div>
@@ -457,8 +567,7 @@ const CourseList = () => {
               <div>
                 <button
                   onClick={handleFilter}
-                  className=" flex  flex-row justify-center bg-Primary w-24  hover:opacity-80 text-xl  text-white  mr-2 p-2  hover:border-Primary hover:border-opacity-80 rounded"
-                >
+                  className=" flex  flex-row justify-center bg-Primary w-24  hover:opacity-80 text-xl  text-white  mr-2 p-2  hover:border-Primary hover:border-opacity-80 rounded">
                   <span>
                     <FaCheck />
                   </span>
@@ -507,9 +616,6 @@ const CourseList = () => {
               dataSource={TableData}
               columns={mergedColumns}
               rowClassName="editable-row"
-              pagination={{
-                onChange: cancel,
-              }}
             />
           </Form>
         </div>

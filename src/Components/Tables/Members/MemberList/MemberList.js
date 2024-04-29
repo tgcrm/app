@@ -1,4 +1,13 @@
-import { Form, Input, InputNumber, Table, Tag } from "antd";
+import {
+  Button,
+  Form,
+  Input,
+  InputNumber,
+  Table,
+  Tag,
+  Modal,
+  Popconfirm,
+} from "antd";
 import dayjs from "dayjs";
 
 import Select from "react-select";
@@ -6,10 +15,12 @@ import { useContext, useEffect, useState } from "react";
 import { DatePicker } from "antd";
 
 import { Link, useLocation } from "react-router-dom";
-import { FaCheck } from "react-icons/fa";
+import { FaCheck, FaInfo } from "react-icons/fa";
 import { TGCRMContext } from "../../../../Context/Context";
 
 import RegistrationForm from "../../../Froms/RegistrationForm/RegistrationForm";
+import MemberUpdationForm from "../../../Froms/RegistrationForm/MemberUpdationForm";
+import { useTestApi } from "../../../../services/getleads";
 var isBetween = require("dayjs/plugin/isBetween");
 dayjs.extend(isBetween);
 const { RangePicker } = DatePicker;
@@ -47,8 +58,7 @@ const EditableCell = ({
               required: true,
               message: `Please Input ${title}!`,
             },
-          ]}
-        >
+          ]}>
           {inputNode}
         </Form.Item>
       ) : (
@@ -73,7 +83,10 @@ const MemberList = () => {
   const [editingKey, setEditingKey] = useState("");
   const [TableData, setTableData] = useState([]);
   const [date, setDate] = useState(null);
+  const [profileData, setProfileData] = useState({});
+  const [PofileCard, setPofileCard] = useState(false);
   const [create_date_object, setcreate_date_object] = useState([]);
+  const { testApiHit, isLoading } = useTestApi();
   const [FormData, setFormData] = useState({
     full_name: [],
     gender: [],
@@ -114,7 +127,19 @@ const MemberList = () => {
     });
     console.log("Admins", data);
     setAdminUsers(data);
+    setPofileCard(false);
   }, [getMember]);
+
+  const onSubmit = () => {
+    testApiHit(
+      { name: "yogesh" },
+      {
+        onSuccess: (data) => {
+          alert(data?.data);
+        },
+      }
+    );
+  };
 
   const handleFullName = (select) => {
     const newData = { ...FormData };
@@ -247,19 +272,19 @@ const MemberList = () => {
                   : record.role === "manager"
                   ? "green"
                   : "red"
-              }
-            >
+              }>
               {record.role}
             </Tag>
           </>
         );
       },
+      fixed: "left",
     },
 
     {
       title: <span className="font-bold">Email</span>,
       dataIndex: "email",
-
+      width: "10%",
       editable: true,
     },
     {
@@ -318,9 +343,57 @@ const MemberList = () => {
     {
       title: "operation",
       dataIndex: "operation",
-      render: (_, record) => <Link>View Profile</Link>,
+      render: (_, record) => (
+        <div className="flex justify-center">
+          <Tag
+            className="font-bold hover:cursor-pointer"
+            color="blue"
+            onClick={() => {
+              handleProfileButton(record);
+            }}>
+            Edit
+          </Tag>{" "}
+          <Popconfirm
+            onConfirm={() => {
+              handleDelete(record._id);
+            }}
+            title="Delete the task"
+            description="Are you sure to delete this task?"
+            icon={<FaInfo color="red" />}
+            okButtonProps={<Button type="primary" />}>
+            <Tag className=" hover:cursor-pointer" color="red">
+              Delete
+            </Tag>
+          </Popconfirm>
+        </div>
+      ),
     },
   ];
+  const handleProfileButton = (record) => {
+    // console.log(record);
+    setProfileData(record);
+    setPofileCard(true);
+  };
+  const handleDelete = async (record_id) => {
+    try {
+      const deleteMember = {
+        documentId: record_id,
+      }; // eslint-disable-next-line
+      const response = await fetch(`https://tgcrm.vercel.app/delete-member`, {
+        method: "POST",
+        body: JSON.stringify(deleteMember),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      alert("Member deleted");
+      getMember();
+    } catch (error) {
+      console.log(error);
+    }
+
+    getMember();
+  };
   const mergedColumns = columns.map((col) => {
     if (!col.editable) {
       return col;
@@ -363,7 +436,11 @@ const MemberList = () => {
     { value: "other", label: "Other" },
   ];
 
-  const options = adminUsers.map((item) => ({
+  const options = Users.map((item) => ({
+    value: item.full_name,
+    label: item.full_name,
+  }));
+  const admin_options = adminUsers.map((item) => ({
     value: item.full_name,
     label: item.full_name,
   }));
@@ -388,7 +465,7 @@ const MemberList = () => {
     label: item.address,
   }));
   let filtername = FormData.full_name.map((item) => {
-    return item.value;
+    return item.value.toLowerCase();
   });
   let filterRole = FormData.role.map((item) => {
     return item.value;
@@ -406,10 +483,10 @@ const MemberList = () => {
     return item.value;
   });
   let filterassigned_under = FormData.assigned_under.map((item) => {
-    return item.value;
+    return item.value.toLowerCase();
   });
   let filterassigned_by = FormData.assigned_by.map((item) => {
-    return item.value;
+    return item.value.toLowerCase();
   });
   let filteraddress = FormData.address.map((item) => {
     return item.value;
@@ -521,24 +598,14 @@ const MemberList = () => {
           <div>
             <button
               onClick={handlefilterToggle}
-              className="bg-Primary w-20 hover:opacity-50 text-sm  text-white font-bold  mr-2 py-2 px-4 border-b-4 border-yellow-800 hover:border-Primary hover:border-opacity-25 rounded"
-            >
+              className="bg-Primary w-20 hover:opacity-50 text-sm  text-white font-bold  mr-2 py-2 px-4 border-b-4 border-yellow-800 hover:border-Primary hover:border-opacity-25 rounded">
               {OpenFilter ? <span>X</span> : <span>Filter</span>}
             </button>
 
             <button
               onClick={handleReset}
-              className="bg-Primary hover:opacity-50 text-sm  text-white font-bold  py-2 px-4 border-b-4 border-yellow-800 hover:border-Primary hover:border-opacity-25 rounded"
-            >
+              className="bg-Primary hover:opacity-50 text-sm  text-white font-bold  py-2 px-4 border-b-4 border-yellow-800 hover:border-Primary hover:border-opacity-25 rounded">
               Reset
-            </button>
-            <button
-              onClick={() => {
-                console.log(rep());
-              }}
-              className="bg-Primary hover:opacity-50 text-sm  text-white font-bold  py-2 px-4 border-b-4 border-yellow-800 hover:border-Primary hover:border-opacity-25 rounded"
-            >
-              click
             </button>
           </div>
         </div>
@@ -701,7 +768,7 @@ const MemberList = () => {
                     className="rounded-r-md bg-slate-200 p1 w-7/12 font-bold pl-1 focus:outline-none "
                     isMulti
                     name="colors"
-                    options={options}
+                    options={admin_options}
                     classNamePrefix="select"
                   />
                 </div>
@@ -710,8 +777,7 @@ const MemberList = () => {
                 <div className="flex flex-row justify-between m-2 bg-slate-600 rounded-md">
                   <label
                     htmlFor="date_created"
-                    className="text-white font-bold p-1"
-                  >
+                    className="text-white font-bold p-1">
                     Date Created:
                   </label>
 
@@ -810,8 +876,7 @@ const MemberList = () => {
               <div>
                 <button
                   onClick={handleFilter}
-                  className=" flex  flex-row justify-center bg-Primary w-24  hover:opacity-80 text-xl  text-white  mr-2 p-2  hover:border-Primary hover:border-opacity-80 rounded"
-                >
+                  className=" flex  flex-row justify-center bg-Primary w-24  hover:opacity-80 text-xl  text-white  mr-2 p-2  hover:border-Primary hover:border-opacity-80 rounded">
                   <span>
                     <FaCheck />
                   </span>
@@ -826,6 +891,17 @@ const MemberList = () => {
 
   return (
     <div className="w-12/12 ">
+      <Modal
+        centered
+        open={PofileCard}
+        okButtonProps={false}
+        cancelButtonProps={false}
+        // onOk={() => setPofileCard(false)}
+        onCancel={() => setPofileCard(false)}
+        width={1000}
+        footer={null}>
+        <MemberUpdationForm {...profileData} />
+      </Modal>
       <FilterTab />
       <div className="w-12/12 bg-gray-200 rounded overflow-hidden shadow-lg m-4 p-2 ">
         <div className="flex justify-between items-center p-4">
@@ -853,6 +929,7 @@ const MemberList = () => {
         )} */}
         <div>
           <Form form={form} component={false}>
+            <button onClick={onSubmit}> click me </button>
             <Table
               components={{
                 body: {
@@ -866,6 +943,7 @@ const MemberList = () => {
               pagination={{
                 onChange: cancel,
               }}
+              scroll={{ x: "calc(700px + 50%)" }}
             />
           </Form>
         </div>

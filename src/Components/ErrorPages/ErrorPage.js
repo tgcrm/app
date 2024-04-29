@@ -6,7 +6,7 @@ const ErrorPage = () => {
     <div>
       <h1>Error 404: Page not found</h1>
       <p>The requested page does not exist.</p>
-      <Link to="/admin-dashboard">Go Home</Link>
+      <Link to="/admin/dashboard">Go Home</Link>
     </div>
   );
 };

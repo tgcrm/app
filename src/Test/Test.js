@@ -1,123 +1,106 @@
-import { Table } from "antd";
-import React, { useContext, useEffect, useState } from "react";
-import { TGCRMContext } from "../Context/Context";
-import dayjs from "dayjs";
-var isBetween = require("dayjs/plugin/isBetween");
-dayjs.extend(isBetween);
-function Test() {
-  const {
-    PerformanceData,
-    getPerformance,
-    LeadsData,
-    getLeads,
-    getStatus,
-    StatusData,
-    AuthUser,
-  } = useContext(TGCRMContext);
-  const [PD, setPD] = useState([]);
-  const [LD, setLD] = useState([]);
-  const [SD, setSD] = useState([]);
-  const [PerformanceTable, setPerformanceTable] = useState([]);
-  const [analyticsDateFilter, setanalyticsDateFilter] = useState([
-    dayjs().format("DD-MM-YYYY"),
-    dayjs().format("DD-MM-YYYY"),
-  ]);
-  const [Status_count, setStatus_count] = useState({
-    active: 0,
-    followUps: 0,
-    interested: 0,
-  });
-  useEffect(() => {
-    if (AuthUser) {
-      const UserPerformance = PerformanceData.filter((item) =>
-        dayjs(item.res_date, "DD-MM-YYYY").isBetween(
-          dayjs(analyticsDateFilter[0], "DD-MM-YYYY)"),
-          dayjs(analyticsDateFilter[1], "DD-MM-YYYY)"),
-          "DD-MM-YYYY",
-          "[]"
-        )
-      );
-      setPerformanceTable(UserPerformance);
-      setPD(PerformanceData);
-    }
-  }, [getPerformance]);
-  useEffect(() => {
-    setLD(LeadsData);
-  }, [getLeads]);
-  useEffect(() => {
-    setSD(StatusData);
-  }, [getStatus]);
+import React from "react";
 
-  let newTD;
-  const countFunction = () => {
-    const NewStatus = { ...Status_count };
-    NewStatus.active = 0;
-    NewStatus.followUps = 0;
-    NewStatus.interested = 0;
-    PerformanceTable.forEach((performance) => {
-      const { staff_name, lead_status } = performance;
+const statusData = [
+  { status_name: "interested", admin_count: "yes", followup_count: "yes" },
+  { status_name: "active", admin_count: "yes", followup_count: "no" },
+  { status_name: "not interested", admin_count: "yes", followup_count: "yes" },
+];
 
-      // Find the matching status object with admin_count set to "yes"
-      const activecount = SD.find(
-        (status) =>
-          status.name.toLowerCase() === lead_status.toLowerCase() &&
-          status.admin_count === "yes"
-      );
-      const followcount = SD.find(
-        (status) =>
-          status.name.toLowerCase() === lead_status.toLowerCase() &&
-          status.followup_count === "yes"
-      );
+const courseData = [
+  { course_name: "MBA" },
+  { course_name: "bsc" },
+  { course_name: "MBA" },
+  { course_name: "bcom" },
+];
 
-      if (activecount) {
-        // Increment the Active count
-        NewStatus.active += 1;
-      }
-      if (followcount) {
-        // Increment the Active count
-        NewStatus.followUps += 1;
-      }
-      if (lead_status.toLowerCase() === "interested") {
-        // Increment the Active count
-        NewStatus.interested += 1;
+const sourceData = [{ source_name: "cd" }, { source_name: "cw" }];
+
+const leadData = [
+  { lead_name: "demon", status: "active", course: "MBA", source: "cd" },
+  { lead_name: "dado", status: "interested", course: "bcom", source: "cw" },
+];
+
+const generateConclusionArray = () => {
+  const conclusion = [];
+
+  sourceData.forEach((source) => {
+    const conclusionItem = {
+      source_name: source.source_name,
+      total_leads: 0,
+      total_active: 0,
+      total_followup: 0,
+    };
+
+    courseData.forEach((course) => {
+      conclusionItem[course.course_name] = 0;
+    });
+
+    leadData.forEach((lead) => {
+      if (lead.source === source.source_name) {
+        conclusionItem.total_leads++;
+
+        const matchingStatus = statusData.find(
+          (status) => status.status_name === lead.status
+        );
+
+        if (matchingStatus) {
+          if (matchingStatus.admin_count === "yes") {
+            conclusionItem.total_active++;
+          }
+
+          if (matchingStatus.followup_count === "yes") {
+            conclusionItem.total_followup++;
+          }
+        }
+
+        const matchingCourse = courseData.find(
+          (course) => course.course_name === lead.course
+        );
+
+        if (matchingCourse) {
+          conclusionItem[matchingCourse.course_name]++;
+        }
       }
     });
-    setStatus_count(NewStatus);
 
-    console.log(NewStatus);
-  };
-  const columns = [
-    {
-      title: "Staff Name",
-      dataIndex: "staff_name",
-      width: "15%",
-      editable: true,
-    },
-    {
-      title: "status",
-      dataIndex: "lead_status",
-      width: "15%",
-      editable: true,
-    },
-    {
-      title: "followUps",
-      dataIndex: "res_date",
-      width: "15%",
-      editable: true,
-    },
-    {
-      title: "lead name",
-      dataIndex: "lead_comment",
-      width: "15%",
-      editable: true,
-    },
-  ];
+    conclusion.push(conclusionItem);
+  });
+
+  return conclusion;
+};
+
+const Test = () => {
+  const conclusion = generateConclusionArray();
+  const courses = courseData.map((course) => course.course_name);
+
   return (
-    <div>
-      <button onClick={countFunction}>click</button>
-      <Table bordered dataSource={PerformanceTable} columns={columns} />
-    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Source</th>
+          <th>Total Leads</th>
+          <th>Total Active</th>
+          <th>Total Follow-up</th>
+          {courses.map((course, index) => (
+            <th key={index}>{course}</th>
+          ))}
+        </tr>
+      </thead>
+      <tbody>
+        {conclusion.map((item, index) => (
+          <tr key={index}>
+            <td>{item.source_name}</td>
+            <td>{item.total_leads}</td>
+            <td>{item.total_active}</td>
+            <td>{item.total_followup}</td>
+            {courses.map((course, index) => (
+              <td key={index}>{item[course]}</td>
+            ))}
+          </tr>
+        ))}
+      </tbody>
+    </table>
   );
-}
+};
 
 export default Test;

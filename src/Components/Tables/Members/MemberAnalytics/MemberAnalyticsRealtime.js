@@ -6,11 +6,13 @@ import Select from "react-select";
 import { FaCheck } from "react-icons/fa";
 import { useLocation } from "react-router-dom";
 import { CSVLink } from "react-csv";
-import MemberAnalyticsRealtime from "./MemberAnalyticsRealtime";
+import { useTestApi } from "../../../../services/getleads";
+import Loader from "../../../Loader/Loader";
+import imageError from "../../../../Assets/Images/404.png";
 var isBetween = require("dayjs/plugin/isBetween");
 dayjs.extend(isBetween);
 const { RangePicker } = DatePicker;
-const MemberAnalytics = () => {
+const MemberAnalyticsRealtime = () => {
   const location = useLocation();
   const {
     getPerformance,
@@ -20,7 +22,8 @@ const MemberAnalytics = () => {
     getMember,
     memberData,
     AuthUser,
-    getLeads,
+    // getLeads,
+    // LeadsData,
   } = useContext(TGCRMContext);
   const [Users, setUsers] = useState([]);
   const [updatedPerformanceArray, setUpdatedPerformanceArray] = useState([]);
@@ -42,6 +45,7 @@ const MemberAnalytics = () => {
   const [OpenFilter, setOpenFilter] = useState(false);
   const [TableData, setTableData] = useState([]);
   const [Path, setPath] = useState("");
+  const { testApiHit, isLoading, isError } = useTestApi();
   const { pathname } = location;
   useEffect(() => {
     const get_location = () => {
@@ -58,9 +62,10 @@ const MemberAnalytics = () => {
   }, []); // eslint-disable-next-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    const result = calculateStatusCounts();
-    setTableData(result);
-    setUpdatedPerformanceArray(result);
+    // let count = calculatePerformance(filterMembers());
+    // const result = calculateStatusCounts(count);
+    // setTableData(result);
+    // setUpdatedPerformanceArray(result);
     if (AuthUser) {
       setUsers(memberData);
     }
@@ -235,15 +240,14 @@ const MemberAnalytics = () => {
 
     data.forEach((item) => {
       const existingStaff = performance.find(
-        (staff) => staff.staff_name === item.staff_name
+        (staff) => staff.assigned_to === item.assigned_to
       );
 
       if (existingStaff) {
-        existingStaff[item.lead_status] =
-          (existingStaff[item.lead_status] || 0) + 1;
+        existingStaff[item.status] = (existingStaff[item.status] || 0) + 1;
       } else {
-        const newStaff = { staff_name: item.staff_name };
-        newStaff[item.lead_status] = 1;
+        const newStaff = { assigned_to: item.assigned_to };
+        newStaff[item.status] = 1;
         performance.push(newStaff);
       }
     });
@@ -253,44 +257,65 @@ const MemberAnalytics = () => {
   let filtername = FormData.full_name.map((item) => {
     return item.value;
   });
-  // const filterTotalAssigned = () => {
-  //   return AuthUser.assigned_info.filter(
-  //     (item) =>
-  // !Analyticsdate_object ||
-  // dayjs(item.assign_date, "DD-MM-YYYY").isBetween(
-  //   dayjs(analyticsDateFilter[0], "DD-MM-YYYY"),
-  //   dayjs(analyticsDateFilter[1], "DD-MM-YYYY"),
-  //   "DD-MM-YYYY",
-  //   "[]"
-  // )
-  //   );
-  // };
   const filterMembers = () => {
-    return PerformanceData.filter(
-      (item) =>
-        (!filtername.length > 0 || filtername.includes(item.staff_name)) &&
-        (!create_date_object ||
-          dayjs(item.res_date, "DD-MM-YYYY").isBetween(
-            dayjs(FormData.date_created[0], "DD-MM-YYYY"),
-            dayjs(FormData.date_created[1], "DD-MM-YYYY"),
-            "DD-MM-YYYY",
-            "[]"
-          ))
+    testApiHit(
+      {
+        name: [],
+        status: [],
+        mobile: [],
+        source: [],
+        course: [],
+        date: [],
+        assigned_to: filtername,
+        address: [],
+        action: [],
+        modified_date: FormData.date_created,
+        // data: "yogesh",
+      },
+      {
+        onSuccess: (data) => {
+          // leads = [...data?.data?.matchingLeads];
+
+          // const lowercaseArray = convertArrayValuesToLowercase(
+          //   data?.data?.matchingLeads
+          // );
+          // const tempData = lowercaseArray.map((obj, index) => {
+          //   return { ...obj, ["key"]: index };
+          // });
+          // setTableData(tempData);
+          // console.log(data?.data?.matchingLeadsCount);
+          const lowercaseArray = convertArrayValuesToLowercase(
+            data?.data?.matchingLeads
+          );
+          let CPD = calculatePerformance(lowercaseArray);
+          calculateStatusCounts(CPD, data?.data?.matchingLeads);
+        },
+      }
     );
+    // return LeadsData.filter(
+    //   (item) =>
+    //     (!filtername.length > 0 || filtername.includes(item.assigned_to)) &&
+    //     (!create_date_object ||
+    //       dayjs(item.modified_date, "DD-MM-YYYY").isBetween(
+    //         dayjs(FormData.date_created[0], "DD-MM-YYYY"),
+    //         dayjs(FormData.date_created[1], "DD-MM-YYYY"),
+    //         "DD-MM-YYYY",
+    //         "[]"
+    //       ))
+    // );
   };
-  let CPD = calculatePerformance(filterMembers());
+  // let CPD = calculatePerformance(filterMembers());
   const handleFilter = () => {
     const lowercaseArray = convertArrayValuesToLowercase(filterMembers());
-    CPD = calculatePerformance(lowercaseArray);
-    calculateStatusCounts();
+    let CPD = calculatePerformance(lowercaseArray);
+    calculateStatusCounts(CPD);
   };
 
-  const calculateStatusCounts = () => {
+  const calculateStatusCounts = (CPD, leads) => {
     const updatedPerformanceArray = CPD.map((performance) => {
       let activeCount = 0;
       let followupCount = 0;
       let total_Acount = 0;
-      let date = [];
       Object.entries(performance).forEach(([key, value]) => {
         if (key !== "staff_name") {
           const status = StatusData.find((status) => status.name === key);
@@ -306,28 +331,23 @@ const MemberAnalytics = () => {
 
         // total_Acount = Assigned_count.assigned_info.length;
       });
-      const Assigned_count = memberData.filter(
-        (user) => user.full_name === performance.staff_name
+      const Assigned_count = leads.filter(
+        (user) => user.assigned_to === performance.assigned_to
       );
-      if (Assigned_count[0]) {
-        const filterDateforAssign = Assigned_count[0].assigned_info.filter(
-          (lead) => {
-            return (
-              !create_date_object ||
-              dayjs(lead.assign_date, "DD-MM-YYYY").isBetween(
-                dayjs(FormData.date_created[0], "DD-MM-YYYY"),
-                dayjs(FormData.date_created[1], "DD-MM-YYYY"),
-                "DD-MM-YYYY",
-                "[]"
-              )
-            );
-          }
-        );
+      if (Assigned_count) {
+        const filterDateforAssign = Assigned_count.filter((lead) => {
+          return (
+            !create_date_object ||
+            dayjs(lead.assign_date, "DD-MM-YYYY").isBetween(
+              dayjs(FormData.date_created[0], "DD-MM-YYYY"),
+              dayjs(FormData.date_created[1], "DD-MM-YYYY"),
+              "DD-MM-YYYY",
+              "[]"
+            )
+          );
+        });
         total_Acount = filterDateforAssign.length;
-        console.log(
-          "🙏 ~ file: MemberAnalytics.js:185 ~ updatedPerformanceArray ~ total_Acount:",
-          Assigned_count
-        );
+        // console.log(Assigned_count);
       }
 
       return {
@@ -367,14 +387,13 @@ const MemberAnalytics = () => {
     title: item.name,
     key: item.name,
   }));
-
   const columns = [
     {
       title: <span className="font-bold">Staff Name</span>,
       dataIndex: "staff_name",
       editable: true,
       render: (_, record) => (
-        <span className="     font-bold">{toCamelCase(record.staff_name)}</span>
+        <span className="     font-bold">{record.assigned_to}</span>
       ),
       fixed: "left",
     },
@@ -398,12 +417,13 @@ const MemberAnalytics = () => {
     ...status_data,
   ];
   const headers = [
-    { label: "Name", key: "staff_name" },
+    { label: "Name", key: "assigned_to" },
     { label: "Assigned", key: "total_Assigned" },
     { label: "Active", key: "active" },
     { label: "Follow Up", key: "followup" },
     ...StatusData.map((item) => ({ label: item.name, key: item.name })),
     { label: "date", key: "date" },
+    { label: "Name", key: "name" },
     // { label: "action", key: "action" },
     // { label: "comment", key: "comment" },
   ];
@@ -467,7 +487,7 @@ const MemberAnalytics = () => {
     return (
       <div className="w-12/12  bg-gray-200 rounded  shadow-lg m-4 ">
         <div className=" flex flex-row justify-between px-6 py-4">
-          <div className="font-bold text-xl mb-2">Daily Reports </div>
+          <div className="font-bold text-xl mb-2">{Path} Real-Time</div>
           <div>
             <button
               onClick={handlefilterToggle}
@@ -535,7 +555,7 @@ const MemberAnalytics = () => {
             <div className="flex justify-end items-center">
               <div>
                 <button
-                  onClick={handleFilter}
+                  onClick={filterMembers}
                   className=" flex  flex-row justify-center bg-Primary w-24  hover:opacity-80 text-xl  text-white  mr-2 p-2  hover:border-Primary hover:border-opacity-80 rounded">
                   <span>
                     <FaCheck />
@@ -551,8 +571,6 @@ const MemberAnalytics = () => {
 
   return (
     <div className="w-12/12 ">
-      {" "}
-      <MemberAnalyticsRealtime />
       <FilterTab />
       <div className="w-12/12 bg-gray-200 rounded overflow-auto shadow-lg m-4 p-2 ">
         <div className="flex justify-between items-center p-4">
@@ -564,17 +582,33 @@ const MemberAnalytics = () => {
           </CSVLink>
         </Button>
         <div className="w-12/12">
-          <Table
-            bordered
-            dataSource={TableData}
-            columns={columns}
-            rowClassName="editable-row"
-            scroll={{ x: "calc(700px + 50%)" }}
-          />
+          {!isLoading ? (
+            !isError ? (
+              <Table
+                bordered
+                dataSource={TableData}
+                columns={columns}
+                rowClassName="editable-row"
+                scroll={{ x: "calc(700px + 50%)" }}
+              />
+            ) : (
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "center",
+                  background: "black",
+                  borderRadius: "10px",
+                }}>
+                <img src={imageError} alt="404" />
+              </div>
+            )
+          ) : (
+            <Loader />
+          )}
         </div>
       </div>
     </div>
   );
 };
 
-export default MemberAnalytics;
+export default MemberAnalyticsRealtime;

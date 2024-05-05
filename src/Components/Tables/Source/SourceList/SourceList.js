@@ -266,13 +266,16 @@ const SourceList = () => {
       const deleteStatus = {
         documentId: Data_Key,
       }; // eslint-disable-next-line
-      const response = await fetch(`https://tgcrm.vercel.app/delete-source`, {
-        method: "POST",
-        body: JSON.stringify(deleteStatus),
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
+      const response = await fetch(
+        `https://tgcrm-api-v2.vercel.app/delete-source`,
+        {
+          method: "POST",
+          body: JSON.stringify(deleteStatus),
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
       alert("Status deleted");
       getSource();
     } catch (error) {

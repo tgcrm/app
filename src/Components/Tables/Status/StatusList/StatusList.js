@@ -345,13 +345,16 @@ const StatusList = () => {
       const deleteStatus = {
         documentId: Data_Key,
       }; // eslint-disable-next-line
-      const response = await fetch(`https://tgcrm.vercel.app/deleteStatus`, {
-        method: "POST",
-        body: JSON.stringify(deleteStatus),
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
+      const response = await fetch(
+        `https://tgcrm-api-v2.vercel.app/deleteStatus`,
+        {
+          method: "POST",
+          body: JSON.stringify(deleteStatus),
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
       alert("Status deleted");
       getStatus();
     } catch (error) {

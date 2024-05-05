@@ -336,13 +336,16 @@ const CourseList = () => {
       const deleteStatus = {
         documentId: Data_Key,
       };
-      const response = await fetch(`https://tgcrm.vercel.app/delete-course`, {
-        method: "POST",
-        body: JSON.stringify(deleteStatus),
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
+      const response = await fetch(
+        `https://tgcrm-api-v2.vercel.app/delete-course`,
+        {
+          method: "POST",
+          body: JSON.stringify(deleteStatus),
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
       alert("Status deleted");
       getCourse();
     } catch (error) {

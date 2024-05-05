@@ -329,17 +329,20 @@ const MemberAnalyticsDashboard = () => {
     if (newdata.lead_course && newdata.lead_status) {
       try {
         setIsSubmit(lead_id);
-        const response = await fetch("https://tgcrm.vercel.app/performance", {
-          method: "POST",
-          body: JSON.stringify(newdata),
-          headers: {
-            "Content-Type": "application/json",
-          },
-        });
+        const response = await fetch(
+          "https://tgcrm-api-v2.vercel.app/performance",
+          {
+            method: "POST",
+            body: JSON.stringify(newdata),
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
+        );
         if (response) {
           try {
             const leadRes = await fetch(
-              "https://tgcrm.vercel.app/update-status-leads",
+              "https://tgcrm-api-v2.vercel.app/update-status-leads",
               {
                 method: "POST",
                 body: JSON.stringify(newdata),
@@ -1235,14 +1238,14 @@ const MemberAnalyticsDashboard = () => {
       try {
         setisTask(true);
         const response = await axios.post(
-          "https://tgcrm.vercel.app/assign-leads",
+          "https://tgcrm-api-v2.vercel.app/assign-leads",
           newAssign
         );
 
         if (response.data) {
           try {
             const leadResponse = await axios.post(
-              "https://tgcrm.vercel.app/update-leads",
+              "https://tgcrm-api-v2.vercel.app/update-leads",
               newAssign
             );
             if (leadResponse) {

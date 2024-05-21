@@ -431,6 +431,7 @@ const LeadsList = () => {
   };
 
   const handleAssignedBy = (e) => {
+    console.log("🙏 ~ handleAssignedBy ~ e:", e);
     const newData = { ...FormData };
 
     newData.assigned_to = e;
@@ -804,7 +805,7 @@ const LeadsList = () => {
   // });
 
   let filterassigned_to = FormData.assigned_to.map((item) => {
-    return item.value.toLowerCase();
+    return item.label.toLowerCase();
   });
   // let filteraddress = FormData.address.map((item) => {
   //   return item.value;
